@@ -1,0 +1,44 @@
+# ============================================
+# REQUIREMENTS - QR MENU BASIC
+# ============================================
+# Backend Python Dependencies
+
+# Web Framework
+fastapi==0.109.0
+uvicorn[standard]==0.27.0
+
+# Database
+sqlalchemy>=2.0.31
+alembic==1.14.0
+pymysql==1.1.1
+cryptography==42.0.2
+
+# Authentication & Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+bcrypt==4.1.2
+pydantic[email]==2.8.2
+pydantic-settings==2.4.0
+
+# Password hashing
+python-multipart==0.0.6
+
+# QR Code
+qrcode==7.4.2
+pillow>=12.0.0
+
+# Environment variables
+python-dotenv==1.0.0
+
+# Testing
+pytest==7.4.4
+pytest-asyncio==0.23.3
+httpx==0.26.0
+
+# Development
+black==24.1.1
+flake8==7.0.0
+mypy==1.8.0
+
+# Utilities
+python-slugify==8.0.1

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 480" role="img" aria-labelledby="title desc">
+  <title id="title">Logo Cafe</title>
+  <desc id="desc">Tasse de cafe marron avec vapeur</desc>
+  <rect width="640" height="480" fill="#fffdf8"/>
+  <g fill="none" stroke="#654027" stroke-linecap="round" stroke-linejoin="round">
+    <path stroke-width="34" d="M188 236c-8 90 35 147 132 147 102 0 145-58 134-147"/>
+    <path stroke-width="30" d="M451 258c83-44 116 78 10 91"/>
+    <path stroke-width="34" d="M185 239c14 45 87 59 153 59 69 0 135-16 144-60-53 18-235 18-297 1Z" fill="#fffdf8"/>
+    <path stroke-width="31" d="M205 391c61 27 199 26 269-5"/>
+    <path stroke-width="27" d="M319 211c-33-45 43-58 5-106-22-28-2-54 23-70"/>
+    <path stroke-width="25" d="M377 215c-22-46 57-64 25-116-17-28 2-50 21-66"/>
+  </g>
+</svg>

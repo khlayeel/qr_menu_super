@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#173f3a">
+    <title>Menu - QR Menu</title>
+   <link rel="stylesheet" href="css/menu.css">
+</head>
+<body>
+    <div class="menu-container">
+        <!-- Header -->
+        <header class="menu-header">
+            <div class="steam" aria-hidden="true">
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
+            <div class="header-topline">
+                <span class="brand-mark">QR MENU</span>
+          
+                <div class="language-picker">
+                    <button id="language-toggle" class="language-toggle" type="button" aria-haspopup="listbox" aria-expanded="false">FR</button>
+                </div>
+            </div>
+            <div class="cafe-info">
+                <div class="logo-frame">
+                    <img id="cafe-logo" src="" alt="Logo du café" class="cafe-logo">
+                </div>
+                <h1 id="cafe-name">Chargement...</h1>
+                <p id="cafe-description"></p>
+                <div class="cafe-meta" aria-label="Informations du café">
+                    <span id="cafe-address"></span>
+                    <span id="cafe-hours"></span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Sentinel : détecte le moment où la barre devient "collée" en haut -->
+        <div id="toolbar-sentinel" aria-hidden="true"></div>
+
+        <!-- Search + toggle vertical/horizontal (icônes) + Category Tabs : seule cette barre est fixed -->
+        <div class="menu-toolbar" id="menu-toolbar">
+            <div class="search-bar">
+                <div class="search-row">
+                    <div class="search-shell" id="search-shell">
+                        <svg class="search-icon" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+                            <line x1="21" y1="21" x2="16.65" y2="16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <input 
+                            type="text" 
+                            id="search-input" 
+                            placeholder="Rechercher un produit..."
+                            aria-label="Rechercher un produit"
+                            class="search-input"
+                        >
+                        <button type="button" id="search-clear" class="search-clear hidden" aria-label="Effacer la recherche">&times;</button>
+                    </div>
+
+                    <div class="view-toggle" role="group" aria-label="Mode d'affichage des produits">
+                        <button type="button" class="view-toggle-btn active" data-mode="vertical" id="mode-vertical" aria-pressed="true" title="Vertical">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4.5" width="16" height="5" rx="1.6" stroke="currentColor" stroke-width="2"/><rect x="4" y="14.5" width="16" height="5" rx="1.6" stroke="currentColor" stroke-width="2"/></svg>
+                        </button>
+                        <button type="button" class="view-toggle-btn" data-mode="horizontal" id="mode-horizontal" aria-pressed="false" title="Horizontal">
+                            <svg viewBox="0 0 24 24" fill="none"><rect x="4" y="4" width="6.5" height="16" rx="1.6" stroke="currentColor" stroke-width="2"/><rect x="13.5" y="4" width="6.5" height="16" rx="1.6" stroke="currentColor" stroke-width="2"/></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="category-tabs">
+                <div id="tabs-container" class="tabs" role="tablist" aria-label="Catégories du menu">
+                    <!-- Tabs + indicateur générés dynamiquement -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Products Grid -->
+        <main class="menu-content">
+            <div class="menu-intro">
+                <div>
+                    <span class="eyebrow">LA CARTE</span>
+                    <h2>À découvrir</h2>
+                </div>
+                <span id="results-count" class="results-count"></span>
+            </div>
+            <div id="products-container" class="products-grid">
+                <!-- Produits seront affichés ici -->
+            </div>
+        </main>
+
+        <!-- Footer -->
+     <footer class="menu-footer">
+    <a href="https://instagram.com/VOTRE_COMPTE" target="_blank" rel="noopener noreferrer" class="instagram-link footer-instagram" aria-label="Instagram">
+        <img src="assets/73-738195_twitter-youtube-cloud-instagram-facebook-instaglam-logo-clipart-removebg-preview.png" alt="Instagram">
+    </a>
+    <div class="footer-text">
+        <strong id="footer-cafe-name">Café El Bahri</strong>
+        <p id="footer-details">Menu digital · Tunis</p>
+    </div>
+</footer>
+    </div>
+
+    <!-- Menu déroulant de langue : hors du header, positionné en JS pour ne jamais être coupé -->
+    <div id="language-menu" class="language-menu hidden" role="listbox" aria-label="Choisir la langue">
+        <button type="button" class="language-option active" data-language="fr" role="option" aria-selected="true">Français <span>FR</span></button>
+        <button type="button" class="language-option" data-language="ar" role="option" aria-selected="false">العربية <span>AR</span></button>
+        <button type="button" class="language-option" data-language="en" role="option" aria-selected="false">English <span>EN</span></button>
+    </div>
+
+    <!-- Bouton de scroll flottant avec anneau de progression -->
+    <button id="scroll-fab" class="scroll-fab" type="button" aria-label="Retour en haut">
+        <svg class="scroll-fab-ring" viewBox="0 0 44 44">
+            <circle class="scroll-fab-track" cx="22" cy="22" r="19"></circle>
+            <circle class="scroll-fab-progress" id="scroll-fab-progress" cx="22" cy="22" r="19"></circle>
+        </svg>
+        <span class="scroll-fab-arrow">↑</span>
+    </button>
+
+    <div id="product-detail" class="product-detail hidden" role="dialog" aria-modal="true" aria-labelledby="detail-name">
+        <button id="detail-backdrop" class="detail-backdrop" type="button" aria-label="Fermer les détails"></button>
+        <article class="detail-sheet">
+            <button id="detail-close" class="detail-close" type="button" aria-label="Fermer les détails">&times;</button>
+            <img id="detail-image" class="detail-image" src="" alt="">
+            <div class="detail-content">
+                <span id="detail-status" class="detail-status"></span>
+                <h2 id="detail-name"></h2>
+                <p id="detail-description"></p>
+                <strong id="detail-price" class="detail-price"></strong>
+            </div>
+        </article>
+    </div>
+<script>
+window.addEventListener('error', function(e) {
+    alert('Erreur JS : ' + e.message);
+});
+window.addEventListener('unhandledrejection', function(e) {
+    alert('Erreur Promise : ' + (e.reason?.message || e.reason));
+});
+</script>
+    <script src="js/menu.js"></script>
+</body>
+</html>

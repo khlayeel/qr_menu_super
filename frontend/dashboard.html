@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#0d302b">
+    <title>Tableau de bord — QR Menu</title>
+    <link rel="stylesheet" href="css/dashboard.css?v=1">
+</head>
+<body>
+    <div class="dashboard-shell">
+        <!-- Sidebar (desktop) / barre horizontale (mobile) -->
+        <aside class="sidebar">
+            <div class="brand">
+                <span class="brand-mark">QR MENU</span>
+                <span class="brand-sub">Espace propriétaire</span>
+            </div>
+
+            <nav class="nav" aria-label="Navigation du tableau de bord">
+                <a href="#overview" class="nav-link active" data-section="overview">
+                    <svg viewBox="0 0 24 24" fill="none" class="nav-icon"><rect x="3" y="3" width="7" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="5" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="12" width="7" height="9" rx="2" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="16" width="7" height="5" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
+                    <span>Vue d'ensemble</span>
+                </a>
+                <a href="#cafe" class="nav-link" data-section="cafe">
+                    <svg viewBox="0 0 24 24" fill="none" class="nav-icon"><path d="M4 9h13a3 3 0 0 1 0 6h-1" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M4 9v7a3 3 0 0 0 3 3h6a3 3 0 0 0 3-3V9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M7 3v2.5M11 3v2.5M15 3v2.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <span>Mon café</span>
+                </a>
+                <a href="#categories" class="nav-link" data-section="categories">
+                    <svg viewBox="0 0 24 24" fill="none" class="nav-icon"><path d="M4 4h7l9 9-7 7-9-9V4z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><circle cx="8.5" cy="8.5" r="1.4" fill="currentColor"/></svg>
+                    <span>Catégories</span>
+                </a>
+                <a href="#products" class="nav-link" data-section="products">
+                    <svg viewBox="0 0 24 24" fill="none" class="nav-icon"><path d="M4 8h16l-1.4 10.2a2 2 0 0 1-2 1.8H7.4a2 2 0 0 1-2-1.8L4 8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M8 8V6a4 4 0 0 1 8 0v2" stroke="currentColor" stroke-width="1.8"/></svg>
+                    <span>Produits</span>
+                </a>
+                <a href="#qrcode" class="nav-link" data-section="qrcode">
+                    <svg viewBox="0 0 24 24" fill="none" class="nav-icon"><rect x="3" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/><rect x="14" y="3" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="14" width="7" height="7" rx="1.2" stroke="currentColor" stroke-width="1.8"/><path d="M14 14h3v3h-3zM19 14h2M14 19h2M19 19h2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                    <span>QR Code</span>
+                </a>
+            </nav>
+
+            <a href="#logout" class="nav-link logout">
+                <svg viewBox="0 0 24 24" fill="none" class="nav-icon"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 17l5-5-5-5M21 12H9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <span>Déconnexion</span>
+            </a>
+        </aside>
+
+        <!-- Contenu principal -->
+        <main class="main">
+            <!-- Vue d'ensemble -->
+            <section id="overview-section" class="section active">
+                <div class="welcome-card">
+                    <span class="eyebrow">TABLEAU DE BORD</span>
+                    <h1 id="user-greeting">Bonjour !</h1>
+                    <p class="welcome-sub">Gérez le menu de <strong id="cafe-name">votre café</strong> depuis cet espace.</p>
+                </div>
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <span class="stat-value" id="product-count">0</span>
+                        <span class="stat-label">Produits au menu</span>
+                    </div>
+                    <div class="stat-card">
+                        <span class="stat-value" id="category-count">0</span>
+                        <span class="stat-label">Catégories</span>
+                    </div>
+                </div>
+                <div class="quick-links">
+                    <a href="#cafe" class="quick-link nav-link" data-section="cafe">
+                        <span class="quick-link-title">Compléter les informations du café</span>
+                        <span class="quick-link-arrow">→</span>
+                    </a>
+                    <a href="#products" class="quick-link nav-link" data-section="products">
+                        <span class="quick-link-title">Ajouter un produit au menu</span>
+                        <span class="quick-link-arrow">→</span>
+                    </a>
+                    <a href="#qrcode" class="quick-link nav-link" data-section="qrcode">
+                        <span class="quick-link-title">Télécharger le QR Code de la table</span>
+                        <span class="quick-link-arrow">→</span>
+                    </a>
+                </div>
+            </section>
+
+            <!-- Informations du café -->
+            <section id="cafe-section" class="section">
+                <div class="section-header">
+                    <div>
+                        <span class="eyebrow">PARAMÈTRES</span>
+                        <h2>Informations du café</h2>
+                    </div>
+                </div>
+
+                <form id="cafe-form" class="panel-card cafe-form">
+                    <div class="logo-upload">
+                        <label for="cafe-logo" class="logo-frame">
+                            <img id="cafe-logo-preview" src="" alt="" class="logo-preview hidden">
+                            <span class="logo-placeholder">Logo</span>
+                        </label>
+                        <input type="file" id="cafe-logo" accept="image/*" class="hidden-file-input">
+                        <span class="field-hint">Cliquez sur le cercle pour changer le logo</span>
+                    </div>
+
+                    <div class="field-grid">
+                        <div class="field">
+                            <label for="cafe-name-input">Nom du café</label>
+                            <input type="text" id="cafe-name-input" placeholder="Café El Bahri">
+                        </div>
+                        <div class="field">
+                            <label for="cafe-phone">Téléphone</label>
+                            <input type="text" id="cafe-phone" placeholder="+216 XX XXX XXX">
+                        </div>
+                        <div class="field field-full">
+                            <label for="cafe-address">Adresse</label>
+                            <input type="text" id="cafe-address" placeholder="Avenue Habib Bourguiba, Tunis">
+                        </div>
+                        <div class="field field-full">
+                            <label for="cafe-description">Description</label>
+                            <textarea id="cafe-description" rows="4" placeholder="Un mot chaleureux sur votre café..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">Enregistrer les modifications</button>
+                    </div>
+                </form>
+            </section>
+
+            <!-- Catégories -->
+            <section id="categories-section" class="section">
+                <div class="section-header">
+                    <div>
+                        <span class="eyebrow">MENU</span>
+                        <h2>Catégories</h2>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="openCategoryModal()">+ Ajouter une catégorie</button>
+                </div>
+                <div id="categories-list" class="cards-grid categories-list">
+                    <p class="empty-hint">Chargement des catégories…</p>
+                </div>
+            </section>
+
+            <!-- Produits -->
+            <section id="products-section" class="section">
+                <div class="section-header">
+                    <div>
+                        <span class="eyebrow">MENU</span>
+                        <h2>Produits</h2>
+                    </div>
+                    <button type="button" class="btn-primary" onclick="openProductModal()">+ Ajouter un produit</button>
+                </div>
+                <div id="products-list" class="cards-grid products-list">
+                    <p class="empty-hint">Chargement des produits…</p>
+                </div>
+            </section>
+
+            <!-- QR Code -->
+            <section id="qrcode-section" class="section">
+                <div class="section-header">
+                    <div>
+                        <span class="eyebrow">TABLE</span>
+                        <h2>QR Code du menu</h2>
+                    </div>
+                </div>
+                <div class="panel-card qr-card">
+                    <div class="qr-frame">
+                        <img id="qr-image" src="" alt="QR Code du menu">
+                    </div>
+                    <p class="qr-hint">Imprimez ce code et posez-le sur vos tables. Vos clients le scannent pour accéder directement à votre menu.</p>
+                    <button type="button" class="btn-primary" onclick="downloadQR()">Télécharger le QR Code</button>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modale Catégorie -->
+    <!-- Modale Catégorie -->
+<div id="category-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <button type="button" class="modal-close" onclick="closeCategoryModal()" aria-label="Fermer">&times;</button>
+        <h3>Ajouter une catégorie</h3>
+        <form id="category-form">
+            <div class="field">
+                <label for="category-name-fr">Nom (Français)</label>
+                <input type="text" id="category-name-fr" placeholder="Cafés" required>
+            </div>
+            <div class="field">
+                <label for="category-name-en">Nom (English)</label>
+                <input type="text" id="category-name-en" placeholder="Coffee">
+            </div>
+            <div class="field">
+                <label for="category-name-ar">الاسم (العربية)</label>
+                <input type="text" id="category-name-ar" placeholder="قهوة" dir="rtl">
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeCategoryModal()">Annuler</button>
+                <button type="submit" class="btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+    <!-- Modale Produit -->
+   <!-- Modale Produit -->
+<div id="product-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+        <button type="button" class="modal-close" onclick="closeProductModal()" aria-label="Fermer">&times;</button>
+        <h3>Ajouter un produit</h3>
+        <form id="product-form">
+            <div class="field">
+                <label for="product-name-fr">Nom (Français)</label>
+                <input type="text" id="product-name-fr" placeholder="Cappuccino" required>
+            </div>
+            <div class="field">
+                <label for="product-name-en">Nom (English)</label>
+                <input type="text" id="product-name-en" required>
+            </div>
+            <div class="field">
+                <label for="product-name-ar">الاسم (العربية)</label>
+                <input type="text" id="product-name-ar" required dir="rtl">
+            </div>
+            <div class="field">
+                <label for="product-category">Catégorie</label>
+                <select id="product-category" required></select>
+            </div>
+            <div class="field">
+                <label for="product-description-fr">Description (Français)</label>
+                <textarea id="product-description-fr" rows="2" required></textarea>
+            </div>
+            <div class="field">
+                <label for="product-description-en">Description (English)</label>
+                <textarea id="product-description-en" rows="2" required></textarea>
+            </div>
+            <div class="field">
+                <label for="product-description-ar">الوصف (العربية)</label>
+                <textarea id="product-description-ar" rows="2" placeholder="إسبريسو مع حليب رغوي..." dir="rtl"></textarea>
+            </div>
+            <div class="field-grid">
+                <div class="field">
+                    <label for="product-price">Prix (DT)</label>
+                    <input type="number" id="product-price" step="0.001" min="0" placeholder="4.500" required>
+                </div>
+                <div class="field">
+                    <label for="product-image">Photo</label>
+                    <input type="file" id="product-image" accept="image/*">
+                </div>
+            </div>
+            <div class="field field-checkbox">
+                <label><input type="checkbox" id="product-available" checked> Disponible à la vente</label>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-secondary" onclick="closeProductModal()">Annuler</button>
+                <button type="submit" class="btn-primary">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+   <script src="js/app.js?v=2"></script>
+<script src="js/dashboard.js?v=2"></script>
+</body>
+</html>
