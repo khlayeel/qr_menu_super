@@ -471,3 +471,5 @@ Pour toute question ou problème, ouvrir une issue sur GitHub.
 
 **Dernière mise à jour:** 2026-09-04  
 **Statut:** 🔄 Développement en cours — Phase 2 — Architecture
+#   q r _ m e n u _ t a v o l i n o  
+ 
