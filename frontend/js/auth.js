@@ -1,15 +1,15 @@
 /* ============================================
-   AUTHENTICATION JAVASCRIPT - QR MENU
+   AUTHENTICATION JAVASCRIPT - QR MENU (version Supabase)
    ============================================ */
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const loginForm = document.getElementById('login-form');
     if (loginForm) {
         loginForm.addEventListener('submit', handleLogin);
     }
 
     // Si l'utilisateur est déjà connecté, rediriger vers dashboard
-    if (Utils.isLoggedIn()) {
+    if (await Auth.isLoggedIn()) {
         window.location.href = '/dashboard.html';
     }
 });
@@ -27,21 +27,12 @@ async function handleLogin(e) {
     }
 
     try {
-        // Appel API de connexion
-        const response = await Utils.apiCall('/auth/login', {
-            method: 'POST',
-            body: JSON.stringify({
-                email,
-                password,
-            }),
-        });
+        const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
 
-        // Stocker le token
-        Utils.setToken(response.access_token);
+        if (error) throw error;
 
         Utils.showMessage('Connexion réussie!', 'success', 1500);
 
-        // Rediriger vers le dashboard après 1.5 secondes
         setTimeout(() => {
             window.location.href = '/dashboard.html';
         }, 1500);
@@ -51,30 +42,8 @@ async function handleLogin(e) {
     }
 }
 
-// Gérer l'inscription (à implémenter plus tard)
-async function handleRegister(email, password, name) {
-    try {
-        const response = await Utils.apiCall('/auth/register', {
-            method: 'POST',
-            body: JSON.stringify({
-                email,
-                password,
-                name,
-            }),
-        });
-
-        // Stocker le token
-        Utils.setToken(response.access_token);
-
-        return response;
-    } catch (error) {
-        console.error('[Auth] Register error:', error);
-        throw error;
-    }
-}
-
 // Déconnexion
-function logout() {
-    Utils.removeToken();
+async function logout() {
+    await Auth.logout();
     window.location.href = '/login.html';
 }

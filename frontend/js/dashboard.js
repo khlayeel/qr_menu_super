@@ -1,18 +1,18 @@
 /* ============================================
-   DASHBOARD JAVASCRIPT - QR MENU
+   DASHBOARD JAVASCRIPT - QR MENU (version Supabase)
    ============================================ */
-
-const BACKEND_URL = API_URL.replace(/\/api\/?$/, '');
 
 let currentCafe = null;
 let categories = [];
 let products = [];
 let editingCategoryId = null;
 let editingProductId = null;
+let activeProductFilter = 'all';
+let productSearchTerm = '';
 
+// Avec Supabase Storage, image/logo sont déjà des URL publiques complètes
 function resolveImage(path) {
-    if (!path) return '';
-    return path.startsWith('http') ? path : `${BACKEND_URL}${path}`;
+    return path || '';
 }
 
 function displayName(value) {
@@ -21,15 +21,15 @@ function displayName(value) {
     return value;
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     console.log('[Dashboard] Initialisation');
 
-    if (!Utils.isLoggedIn()) {
+    if (!(await Auth.isLoggedIn())) {
         window.location.href = '/login.html';
         return;
     }
 
-    loadUserData();
+    await loadUserData();
 
     document.querySelectorAll('.nav-link').forEach(link => {
         if (link.classList.contains('logout')) return;
@@ -39,6 +39,11 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('cafe-form')?.addEventListener('submit', handleCafeUpdate);
     document.getElementById('category-form')?.addEventListener('submit', handleCategorySubmit);
     document.getElementById('product-form')?.addEventListener('submit', handleProductSubmit);
+
+    document.getElementById('product-search')?.addEventListener('input', (e) => {
+        productSearchTerm = e.target.value;
+        renderProductsList();
+    });
 
     document.getElementById('cafe-logo')?.addEventListener('change', (e) => {
         const file = e.target.files[0];
@@ -50,18 +55,42 @@ document.addEventListener('DOMContentLoaded', () => {
         if (placeholder) placeholder.classList.add('hidden');
     });
 
-    document.querySelector('.nav-link.logout')?.addEventListener('click', (e) => {
+    document.querySelector('.nav-link.logout')?.addEventListener('click', async (e) => {
         e.preventDefault();
-        Utils.removeToken();
+        await Auth.logout();
         window.location.href = '/login.html';
     });
 });
 
 async function loadUserData() {
     try {
-        currentCafe = await Utils.apiCall('/cafes/me');
-        categories = await Utils.apiCall('/categories/');
-        products = await Utils.apiCall('/products/');
+        const user = await Auth.getUser();
+        if (!user) throw new Error('Utilisateur non connecté');
+
+        const { data: cafe, error: cafeError } = await supabaseClient
+            .from('cafes')
+            .select('*')
+            .eq('owner_id', user.id)
+            .single();
+
+        if (cafeError) throw cafeError;
+        currentCafe = cafe;
+
+        const { data: cats, error: catError } = await supabaseClient
+            .from('categories')
+            .select('*')
+            .eq('cafe_id', currentCafe.id)
+            .order('position');
+        if (catError) throw catError;
+        categories = cats || [];
+
+        const { data: prods, error: prodError } = await supabaseClient
+            .from('products')
+            .select('*, categories!inner(cafe_id)')
+            .eq('categories.cafe_id', currentCafe.id)
+            .order('position');
+        if (prodError) throw prodError;
+        products = prods || [];
 
         updateDashboardUI();
         loadQRCode();
@@ -103,7 +132,37 @@ function updateDashboardUI() {
 
     populateCategorySelect();
     renderCategoriesList();
+    renderProductCategoryTabs();
     renderProductsList();
+}
+
+/* Navbar de catégories au-dessus de la liste des produits, pour filtrer
+   rapidement en combinaison avec la recherche par nom. */
+function renderProductCategoryTabs() {
+    const container = document.getElementById('product-category-tabs');
+    if (!container) return;
+
+    // Si la catégorie actuellement sélectionnée a été supprimée, on revient à "Tous".
+    if (activeProductFilter !== 'all' && !categories.some(c => c.id === activeProductFilter)) {
+        activeProductFilter = 'all';
+    }
+
+    const tabs = [{ id: 'all', label: 'Tous' }, ...categories.map(c => ({ id: c.id, label: displayName(c.name) }))];
+
+    container.innerHTML = tabs.map(tab => `
+        <button type="button" class="tab-btn ${activeProductFilter === tab.id ? 'active' : ''}" data-filter="${tab.id}">
+            ${tab.label}
+        </button>
+    `).join('');
+
+    container.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const value = btn.dataset.filter;
+            activeProductFilter = value === 'all' ? 'all' : parseInt(value);
+            renderProductCategoryTabs();
+            renderProductsList();
+        });
+    });
 }
 
 function populateCategorySelect() {
@@ -119,24 +178,46 @@ function renderCategoriesList() {
         container.innerHTML = '<p class="empty-hint">Aucune catégorie pour le moment.</p>';
         return;
     }
-    container.innerHTML = categories.map(cat => `
-        <div class="card">
-            <h3>${displayName(cat.name)}</h3>
-            <button class="btn-secondary" onclick="editCategory(${cat.id})">Modifier</button>
-            <button class="btn-secondary" style="color:#c0392b;" onclick="deleteCategory(${cat.id})">Supprimer</button>
+    container.innerHTML = categories.map(cat => {
+        const count = products.filter(p => p.category_id === cat.id).length;
+        return `
+        <div class="card category-card">
+            <div class="card-body">
+                <h3>${displayName(cat.name)}</h3>
+                <span class="meta-tag">${count} ${count === 1 ? 'produit' : 'produits'}</span>
+            </div>
+            <div class="card-actions">
+                <button class="btn-secondary" onclick="editCategory(${cat.id})">Modifier</button>
+                <button type="button" class="btn-danger" onclick="deleteCategory(${cat.id})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg>Supprimer</button>
+            </div>
         </div>
-    `).join('');
+    `;
+    }).join('');
 }
 
 function renderProductCard(p, category) {
     const catName = category ? displayName(category.name) : '—';
     return `
-        <div class="card">
-            ${p.image ? `<img src="${resolveImage(p.image)}" alt="${displayName(p.name)}">` : ''}
-            <h3>${displayName(p.name)}</h3>
-            <p>${catName} · ${Utils.formatPrice(p.price)} · ${p.available ? 'Disponible' : 'Indisponible'}</p>
-            <button class="btn-secondary" onclick="editProduct(${p.id})">Modifier</button>
-            <button class="btn-secondary" style="color:#c0392b;" onclick="deleteProduct(${p.id})">Supprimer</button>
+        <div class="card product-admin-card">
+            ${p.image
+                ? `<img src="${resolveImage(p.image)}" alt="${displayName(p.name)}" class="card-image">`
+                : `<div class="card-image card-image-placeholder">Pas de photo</div>`}
+            <div class="card-body">
+                <div class="card-top">
+                    <h3>${displayName(p.name)}</h3>
+                    <span class="card-price">${Utils.formatPrice(p.price)}</span>
+                </div>
+                <div class="card-meta">
+                    <span class="meta-tag">${catName}</span>
+                    <span class="status-pill ${p.available ? 'status-available' : 'status-unavailable'}">
+                        ${p.available ? '● Disponible' : '● Indisponible'}
+                    </span>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="btn-secondary" onclick="editProduct(${p.id})">Modifier</button>
+                <button type="button" class="btn-danger" onclick="deleteProduct(${p.id})"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 11v5M14 11v5"/></svg>Supprimer</button>
+            </div>
         </div>
     `;
 }
@@ -144,8 +225,25 @@ function renderProductCard(p, category) {
 function renderProductsList() {
     const container = document.getElementById('products-list');
     if (!container) return;
+
     if (products.length === 0) {
         container.innerHTML = '<p class="empty-hint">Aucun produit pour le moment.</p>';
+        return;
+    }
+
+    let filtered = products;
+
+    if (activeProductFilter !== 'all') {
+        filtered = filtered.filter(p => p.category_id === activeProductFilter);
+    }
+
+    const term = productSearchTerm.trim().toLowerCase();
+    if (term) {
+        filtered = filtered.filter(p => displayName(p.name).toLowerCase().includes(term));
+    }
+
+    if (filtered.length === 0) {
+        container.innerHTML = '<p class="empty-hint">Aucun produit ne correspond à votre recherche.</p>';
         return;
     }
 
@@ -153,7 +251,7 @@ function renderProductsList() {
     categories.forEach(cat => groups.set(cat.id, { category: cat, items: [] }));
     const orphans = [];
 
-    products.forEach(p => {
+    filtered.forEach(p => {
         if (groups.has(p.category_id)) {
             groups.get(p.category_id).items.push(p);
         } else {
@@ -214,21 +312,26 @@ async function handleCafeUpdate(e) {
     };
 
     try {
-        currentCafe = await Utils.apiCall('/cafes/me', {
-            method: 'PUT',
-            body: JSON.stringify(payload),
-        });
-
         const logoFile = document.getElementById('cafe-logo')?.files[0];
         if (logoFile) {
-            currentCafe = await uploadFile(`/cafes/me/logo`, logoFile);
+            payload.logo = await uploadToStorage(logoFile, 'logos/');
         }
 
+        const { data, error } = await supabaseClient
+            .from('cafes')
+            .update(payload)
+            .eq('id', currentCafe.id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        currentCafe = data;
+
         updateDashboardUI();
-        Utils.showMessage('Café mis à jour avec succès', 'success');
+        Utils.showMessage('Les informations de votre café ont été mises à jour avec succès.', 'success');
     } catch (error) {
         console.error('[Dashboard] Erreur:', error);
-        Utils.showMessage('Erreur lors de la mise à jour', 'error');
+        Utils.showMessage(`Erreur lors de la mise à jour : ${error.message || 'veuillez réessayer.'}`, 'error');
     }
 }
 
@@ -255,16 +358,19 @@ function editCategory(id) {
 }
 
 async function deleteCategory(id) {
-    if (!confirm('Supprimer cette catégorie et tous ses produits ?')) return;
+    const category = categories.find(c => c.id === id);
+    const label = category ? displayName(category.name) : 'cette catégorie';
+    if (!confirm(`Supprimer la catégorie "${label}" ainsi que tous ses produits ? Cette action est irréversible.`)) return;
     try {
-        await Utils.apiCall(`/categories/${id}`, { method: 'DELETE' });
+        const { error } = await supabaseClient.from('categories').delete().eq('id', id);
+        if (error) throw error;
         categories = categories.filter(c => c.id !== id);
         products = products.filter(p => p.category_id !== id);
         updateDashboardUI();
-        Utils.showMessage('Catégorie supprimée', 'success');
+        Utils.showMessage(`Catégorie "${label}" supprimée avec succès.`, 'success');
     } catch (error) {
         console.error('[Dashboard] Erreur:', error);
-        Utils.showMessage('Erreur lors de la suppression', 'error');
+        Utils.showMessage(`Erreur lors de la suppression : ${error.message || 'veuillez réessayer.'}`, 'error');
     }
 }
 
@@ -276,7 +382,7 @@ async function handleCategorySubmit(e) {
     const ar = document.getElementById('category-name-ar').value.trim();
 
     if (!fr) {
-        Utils.showMessage('Le nom en français est obligatoire', 'error');
+        Utils.showMessage('Le nom en français est obligatoire.', 'error');
         return;
     }
 
@@ -284,25 +390,30 @@ async function handleCategorySubmit(e) {
 
     try {
         if (editingCategoryId) {
-            const updated = await Utils.apiCall(`/categories/${editingCategoryId}`, {
-                method: 'PUT',
-                body: JSON.stringify({ name }),
-            });
-            categories = categories.map(c => c.id === editingCategoryId ? updated : c);
-            Utils.showMessage('Catégorie modifiée', 'success');
+            const { data, error } = await supabaseClient
+                .from('categories')
+                .update({ name })
+                .eq('id', editingCategoryId)
+                .select()
+                .single();
+            if (error) throw error;
+            categories = categories.map(c => c.id === editingCategoryId ? data : c);
+            Utils.showMessage(`Catégorie "${fr}" modifiée avec succès.`, 'success');
         } else {
-            const created = await Utils.apiCall('/categories/', {
-                method: 'POST',
-                body: JSON.stringify({ name, position: categories.length }),
-            });
-            categories.push(created);
-            Utils.showMessage('Catégorie ajoutée', 'success');
+            const { data, error } = await supabaseClient
+                .from('categories')
+                .insert({ cafe_id: currentCafe.id, name, position: categories.length })
+                .select()
+                .single();
+            if (error) throw error;
+            categories.push(data);
+            Utils.showMessage(`Catégorie "${fr}" ajoutée avec succès.`, 'success');
         }
         updateDashboardUI();
         closeCategoryModal();
     } catch (error) {
         console.error('[Dashboard] Erreur:', error);
-        Utils.showMessage('Erreur lors de l\'enregistrement', 'error');
+        Utils.showMessage(`Erreur lors de l'enregistrement de la catégorie : ${error.message || 'veuillez réessayer.'}`, 'error');
     }
 }
 
@@ -341,15 +452,18 @@ function editProduct(id) {
 }
 
 async function deleteProduct(id) {
-    if (!confirm('Supprimer ce produit ?')) return;
+    const product = products.find(p => p.id === id);
+    const label = product ? displayName(product.name) : 'ce produit';
+    if (!confirm(`Supprimer le produit "${label}" ? Cette action est irréversible.`)) return;
     try {
-        await Utils.apiCall(`/products/${id}`, { method: 'DELETE' });
+        const { error } = await supabaseClient.from('products').delete().eq('id', id);
+        if (error) throw error;
         products = products.filter(p => p.id !== id);
         updateDashboardUI();
-        Utils.showMessage('Produit supprimé', 'success');
+        Utils.showMessage(`Produit "${label}" supprimé avec succès.`, 'success');
     } catch (error) {
         console.error('[Dashboard] Erreur:', error);
-        Utils.showMessage('Erreur lors de la suppression', 'error');
+        Utils.showMessage(`Erreur lors de la suppression : ${error.message || 'veuillez réessayer.'}`, 'error');
     }
 }
 
@@ -372,14 +486,11 @@ async function handleProductSubmit(e) {
     if (!nameEn) missing.push('nom (anglais)');
     if (!nameAr) missing.push('nom (arabe)');
     if (!categoryId) missing.push('catégorie');
-    if (!descFr) missing.push('description (français)');
-    if (!descEn) missing.push('description (anglais)');
-    if (!descAr) missing.push('description (arabe)');
     if (!price) missing.push('prix');
     if (!editingProductId && !imageFile) missing.push('image');
 
     if (missing.length > 0) {
-        Utils.showMessage(`Champs obligatoires manquants : ${missing.join(', ')}`, 'error');
+        Utils.showMessage(`Champs obligatoires manquants : ${missing.join(', ')}.`, 'error');
         return;
     }
 
@@ -389,83 +500,78 @@ async function handleProductSubmit(e) {
         category_id: parseInt(categoryId),
         price: parseFloat(price),
         available,
+        position: editingProductId
+            ? undefined
+            : products.filter((p) => p.category_id === parseInt(categoryId)).length,
     };
+    if (payload.position === undefined) delete payload.position;
 
     try {
-        let product;
-        if (editingProductId) {
-            product = await Utils.apiCall(`/products/${editingProductId}`, {
-                method: 'PUT',
-                body: JSON.stringify(payload),
-            });
-        } else {
-            product = await Utils.apiCall('/products/', {
-                method: 'POST',
-                body: JSON.stringify(payload),
-            });
-        }
-
         if (imageFile) {
-            product = await uploadFile(`/products/${product.id}/image`, imageFile);
+            payload.image = await uploadToStorage(imageFile, 'products/');
         }
 
+        let data, error;
         if (editingProductId) {
-            products = products.map(p => p.id === product.id ? product : p);
-            Utils.showMessage('Produit modifié', 'success');
+            ({ data, error } = await supabaseClient
+                .from('products')
+                .update(payload)
+                .eq('id', editingProductId)
+                .select()
+                .single());
         } else {
-            products.push(product);
-            Utils.showMessage('Produit ajouté', 'success');
+            ({ data, error } = await supabaseClient
+                .from('products')
+                .insert(payload)
+                .select()
+                .single());
+        }
+
+        if (error) throw error;
+
+        if (editingProductId) {
+            products = products.map(p => p.id === data.id ? data : p);
+            Utils.showMessage(`Produit "${nameFr}" modifié avec succès.`, 'success');
+        } else {
+            products.push(data);
+            Utils.showMessage(`Produit "${nameFr}" ajouté avec succès.`, 'success');
         }
 
         updateDashboardUI();
         closeProductModal();
     } catch (error) {
         console.error('[Dashboard] Erreur:', error);
-        Utils.showMessage('Erreur lors de l\'enregistrement', 'error');
+        Utils.showMessage(`Erreur lors de l'enregistrement du produit : ${error.message || 'veuillez réessayer.'}`, 'error');
     }
 }
 
-async function uploadFile(endpoint, file) {
-    const formData = new FormData();
-    formData.append('file', file);
-
-    const response = await fetch(`${API_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${Utils.getToken()}` },
-        body: formData,
-    });
-
-    if (!response.ok) throw new Error(`Upload échoué: ${response.statusText}`);
-    return response.json();
-}
-
+/* QR code généré directement dans le navigateur (plus besoin de backend).
+   Nécessite la librairie qrcode.js (voir instructions HTML). */
 async function loadQRCode() {
     try {
-        const response = await fetch(`${API_URL}/qrcodes/me`, {
-            headers: { 'Authorization': `Bearer ${Utils.getToken()}` },
-        });
-        if (!response.ok) throw new Error('QR code indisponible');
-
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        window.__qrBlobUrl = url;
+        const menuUrl = `${window.location.origin}/menu.html?cafe=${currentCafe.slug}`;
+        const canvas = document.createElement('canvas');
+        await QRCode.toCanvas(canvas, menuUrl, { width: 300 });
+        const dataUrl = canvas.toDataURL('image/png');
 
         const img = document.getElementById('qr-image');
-        if (img) img.src = url;
+        if (img) img.src = dataUrl;
+        window.__qrDataUrl = dataUrl;
     } catch (error) {
         console.error('[Dashboard] Erreur QR code:', error);
     }
 }
 
 function downloadQR() {
-    if (!window.__qrBlobUrl) {
+    if (!window.__qrDataUrl) {
         Utils.showMessage('QR code non chargé', 'error');
         return;
     }
     const a = document.createElement('a');
-    a.href = window.__qrBlobUrl;
+    a.href = window.__qrDataUrl;
     a.download = `qrcode-${currentCafe?.slug || 'menu'}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
+    Utils.showMessage('QR Code téléchargé avec succès.', 'success');
 }

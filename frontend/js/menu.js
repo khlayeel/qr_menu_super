@@ -1,6 +1,6 @@
 /* ============================================
    MENU JAVASCRIPT - QR MENU
-   Menu Public pour les Clients
+   Menu Public pour les Clients (version Supabase)
    ============================================ */
 
 let cafeData = null;
@@ -24,8 +24,6 @@ const demoImages = {
     dessert: 'assets/gateau.png',
     snack: 'assets/tacos.png',
 };
-
-
 
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Menu] Initialisation');
@@ -224,41 +222,46 @@ function getCafeSlugFromURL() {
 }
 
 function localized(value) {
-    return typeof value === 'object' ? value[currentLanguage] || value.fr : value;
+    if (value == null) return '';
+    return typeof value === 'object' ? value[currentLanguage] || value.fr || '' : value;
 }
 
-
-
-
-const BACKEND_URL_MENU = `http://${window.location.hostname}:8000`;
-
+/* Avec Supabase, les images (produits, catégories, logo) sont stockées
+   comme URL publiques complètes (Supabase Storage) -> plus besoin de préfixer
+   avec l'URL d'un backend. */
 function resolveMenuImage(path, fallback) {
-    if (!path) return fallback;
-    return path.startsWith('http') ? path : `${BACKEND_URL_MENU}${path}`;
+    return path || fallback;
 }
 
 async function loadCafeMenu(cafeSlug) {
     try {
-        const [cafeRes, categoriesRes, productsRes] = await Promise.all([
-            fetch(`${BACKEND_URL_MENU}/api/cafes/${cafeSlug}`),
-            fetch(`${BACKEND_URL_MENU}/api/categories/public/${cafeSlug}`),
-            fetch(`${BACKEND_URL_MENU}/api/products/public/${cafeSlug}`),
-        ]);
+        // Un seul aller-retour réseau : le café, ses catégories ET leurs produits
+        // arrivent ensemble (imbrication Supabase), au lieu de 2-3 requêtes séparées.
+        const { data: cafe, error: cafeError } = await supabaseClient
+            .from('cafes')
+            .select('*, categories(*, products(*))')
+            .eq('slug', cafeSlug)
+            .single();
 
-        if (!cafeRes.ok) {
+        if (cafeError || !cafe) {
             showError('Café introuvable. Vérifiez le lien du QR code.');
             return;
         }
 
-        cafeData = await cafeRes.json();
-        const rawCategories = categoriesRes.ok ? await categoriesRes.json() : [];
-        const rawProducts = productsRes.ok ? await productsRes.json() : [];
+        cafeData = cafe;
+
+        const rawCategories = (cafe.categories || []).slice().sort((a, b) => a.position - b.position);
 
         allCategories = rawCategories.map((cat) => ({
             id: cat.id,
             name: cat.name,
+            subtitle: cat.subtitle || null,
             icon: resolveMenuImage(cat.icon, null),
         }));
+
+        const rawProducts = rawCategories.flatMap((cat) =>
+            (cat.products || []).slice().sort((a, b) => a.position - b.position)
+        );
 
         allProducts = rawProducts.map((p) => ({
             id: p.id,
@@ -267,22 +270,21 @@ async function loadCafeMenu(cafeSlug) {
             price: parseFloat(p.price),
             category_id: p.category_id,
             available: p.available,
-            image: resolveMenuImage(p.image, demoImages.coffee),
-            fallback: demoImages.coffee,
+            image: p.image || null,
         }));
 
-        filteredProducts = [...allProducts];
+        // Seuls les produits marqués "disponible" par l'admin apparaissent sur le menu client.
+        filteredProducts = allProducts.filter((product) => product.available);
         selectedCategoryId = allCategories[0]?.id ?? null;
 
         updateMenuUI();
         renderCategories();
         renderProducts();
         syncToolbarHeight();
-  } catch (error) {
-    console.error('[Menu] Erreur:', error);
-    alert('DEBUG: ' + error.message);
-    showError('Impossible de charger le menu.');
-}
+    } catch (error) {
+        console.error('[Menu] Erreur:', error);
+        showError('Impossible de charger le menu.');
+    }
 }
 
 function updateMenuUI() {
@@ -300,16 +302,6 @@ function updateMenuUI() {
     if (cafeHours) cafeHours.textContent = cafeData.opening_hours || '';
     if (footerCafeName) footerCafeName.textContent = cafeData.name;
 }
-
-
-
-
-
-
-
-
-
-
 
 function scrollToCategory(categoryId) {
     const section = document.querySelector(`.category-section[data-category-id="${categoryId}"]`);
@@ -338,7 +330,7 @@ function renderCategories() {
             if (searchInput && searchInput.value) {
                 searchInput.value = '';
                 document.getElementById('search-clear')?.classList.add('hidden');
-                filteredProducts = [...allProducts];
+                filteredProducts = allProducts.filter((product) => product.available);
                 renderProducts();
                 requestAnimationFrame(() => scrollToCategory(category.id));
             } else {
@@ -368,16 +360,19 @@ function handleSearch(e) {
     const searchTerm = e.target.value.toLowerCase();
     document.getElementById('search-clear')?.classList.toggle('hidden', e.target.value.length === 0);
 
+    const availableProducts = allProducts.filter((product) => product.available);
+
     if (!searchTerm) {
-        filteredProducts = [...allProducts];
+        filteredProducts = availableProducts;
         renderProducts();
         return;
     }
 
-    filteredProducts = allProducts.filter(product => {
-        const matchesSearch = Object.values(product.name).some((name) => name.toLowerCase().includes(searchTerm)) ||
-            Object.values(product.description).some((description) => description.toLowerCase().includes(searchTerm));
-        return matchesSearch;
+    filteredProducts = availableProducts.filter(product => {
+        // Les champs traduits (fr/ar/en) peuvent contenir null quand une langue n'est pas renseignée.
+        const contains = (value) => typeof value === 'string' && value.toLowerCase().includes(searchTerm);
+        const matchesIn = (field) => typeof field === 'string' ? contains(field) : Object.values(field || {}).some(contains);
+        return matchesIn(product.name) || matchesIn(product.description);
     });
     renderProducts();
 }
@@ -407,28 +402,29 @@ const categorySections = allCategories.map((category) => ({
     container.innerHTML = categorySections.map((section) => `
         <section class="category-section" data-category-id="${section.id}" aria-labelledby="category-${section.id}">
             <div class="category-heading">
-                <div class="category-heading-title">
-                    ${section.icon ? `<img src="${section.icon}" alt="" class="category-heading-icon">` : ''}
+                <div class="category-heading-text">
                     <h3 id="category-${section.id}">${localized(section.name)}</h3>
+                    ${section.subtitle ? `
+                    <div class="category-subtitle-wrap">
+                        <span class="category-subtitle-rule" aria-hidden="true"></span>
+                        <p class="category-subtitle">${localized(section.subtitle)}</p>
+                    </div>` : ''}
                 </div>
                 <span class="count">${section.products.length} ${section.products.length === 1 ? text.article : text.articles}</span>
             </div>
             <div class="product-rail">
                 ${section.products.map(product => `
-        <article class="product-card ${!product.available ? 'unavailable' : ''}" data-product-id="${product.id}" tabindex="${product.available ? '0' : '-1'}" aria-disabled="${!product.available}">
+        <article class="product-card ${!product.image ? 'no-media' : ''}" data-product-id="${product.id}" tabindex="0">
+            ${product.image ? `
             <div class="product-media">
                 <img src="${product.image}" alt="${localized(product.name)}" class="product-image" loading="lazy">
-                ${product.available ? '' : `<div class="product-badge">${text.unavailable}</div>`}
-            </div>
+            </div>` : ''}
             <div class="product-info">
                 <div class="product-header">
                     <h3 class="product-name">${localized(product.name)}</h3>
                     <div class="product-price">${formatPrice(product.price)}</div>
                 </div>
-                <p class="product-description">${localized(product.description)}</p>
-                <div class="product-availability ${!product.available ? 'unavailable' : ''}">
-                    ${product.available ? `✓ ${text.available}` : `✗ ${text.unavailable}`}
-                </div>
+                ${localized(product.description) ? `<p class="product-description">${localized(product.description)}</p>` : ''}
             </div>
         </article>
                 `).join('')}
@@ -436,34 +432,39 @@ const categorySections = allCategories.map((category) => ({
         </section>
     `).join('');
 
-    container.querySelectorAll('.product-card:not(.unavailable)').forEach((card) => {
+    container.querySelectorAll('.product-card').forEach((card) => {
         const product = allProducts.find((item) => item.id === Number(card.dataset.productId));
-        card.querySelector('.product-image')?.addEventListener('error', (event) => {
-            if (product?.fallback && event.currentTarget.src !== product.fallback) {
-                event.currentTarget.src = product.fallback;
-            }
-        }, { once: true });
         card.addEventListener('click', () => openProductDetail(product));
         card.addEventListener('keydown', (event) => {
             if (event.key === 'Enter' || event.key === ' ') openProductDetail(product);
         });
     });
 
-    container.querySelectorAll('.product-card.unavailable').forEach((card) => {
-        const product = allProducts.find((item) => item.id === Number(card.dataset.productId));
-        card.querySelector('.product-image')?.addEventListener('error', (event) => {
-            if (product?.fallback && event.currentTarget.src !== product.fallback) {
-                event.currentTarget.src = product.fallback;
-            }
-        }, { once: true });
-    });
-
     container.querySelectorAll('.product-card').forEach(initCardTilt);
 
     observeProductCards(container);
     observeCategorySections(container);
+    observeCategorySubtitles(container);
     syncToolbarHeight();
 }
+
+/* Révèle le sous-titre de catégorie (effet rideau) à chaque fois que la
+   section entre à l'écran ; le nom de la catégorie reste toujours visible. */
+function observeCategorySubtitles(container) {
+    const wraps = container.querySelectorAll('.category-subtitle-wrap');
+    if (wraps.length === 0) return;
+    if (!('IntersectionObserver' in window)) {
+        wraps.forEach((el) => el.classList.add('is-visible'));
+        return;
+    }
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            entry.target.classList.toggle('is-visible', entry.isIntersecting);
+        });
+    }, { threshold: 0.05 });
+    wraps.forEach((el) => observer.observe(el));
+}
+
 // Relance les animations d'entrée (header, logo, titre, meta) comme au premier chargement
 function replayEntranceAnimations() {
     const selectors = ['.header-topline', '.logo-frame', '.menu-header h1', '.menu-header p', '.cafe-meta'];
@@ -525,12 +526,24 @@ function updateResultsCount(count) {
 
 function openProductDetail(product) {
     if (!product || !product.available) return;
-    document.getElementById('detail-image').src = product.image;
-    document.getElementById('detail-image').alt = localized(product.name);
+    const detailImage = document.getElementById('detail-image');
+    if (detailImage) {
+        if (product.image) {
+            detailImage.src = product.image;
+            detailImage.alt = localized(product.name);
+            detailImage.style.display = '';
+        } else {
+            detailImage.style.display = 'none';
+        }
+    }
     document.getElementById('detail-name').textContent = localized(product.name);
-    document.getElementById('detail-description').textContent = localized(product.description);
+    const detailDescription = document.getElementById('detail-description');
+    detailDescription.textContent = localized(product.description);
+    detailDescription.style.display = detailDescription.textContent ? '' : 'none';
     document.getElementById('detail-price').textContent = formatPrice(product.price);
-    document.getElementById('detail-status').textContent = translations[currentLanguage].available;
+    // Tout produit affiché est par définition disponible : pas besoin de le repréciser ici.
+    const detailStatus = document.getElementById('detail-status');
+    if (detailStatus) detailStatus.style.display = 'none';
     document.getElementById('product-detail').classList.remove('hidden');
     document.body.classList.add('detail-open');
     document.getElementById('detail-close').focus();
@@ -557,7 +570,7 @@ function setLanguage(language) {
     renderCategories();
     renderProducts();
     updateMenuUI();
-    replayEntranceAnimations(); 
+    replayEntranceAnimations();
     syncToolbarHeight();
 }
 

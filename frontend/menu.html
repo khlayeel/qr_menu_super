@@ -5,11 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#173f3a">
     <title>Menu - QR Menu</title>
-   <link rel="stylesheet" href="css/menu.css">
+   <link rel="preconnect" href="https://fonts.googleapis.com">
+   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+   <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+   <link rel="stylesheet" href="css/menu.css?v=6">
+
 </head>
 <body>
     <div class="menu-container">
-        <!-- Header -->
+     <!-- Header -->
         <header class="menu-header">
             <div class="steam" aria-hidden="true">
                 <span></span><span></span><span></span><span></span><span></span>
@@ -25,7 +29,7 @@
                 <div class="logo-frame">
                     <img id="cafe-logo" src="" alt="Logo du café" class="cafe-logo">
                 </div>
-                <h1 id="cafe-name">Chargement...</h1>
+                <h1 id="cafe-name"></h1>
                 <p id="cafe-description"></p>
                 <div class="cafe-meta" aria-label="Informations du café">
                     <span id="cafe-address"></span>
@@ -69,7 +73,11 @@
 
             <div class="category-tabs">
                 <div id="tabs-container" class="tabs" role="tablist" aria-label="Catégories du menu">
-                    <!-- Tabs + indicateur générés dynamiquement -->
+                    <!-- Silhouette affichée le temps que les vraies catégories arrivent -->
+                    <span class="tab-skeleton"></span>
+                    <span class="tab-skeleton"></span>
+                    <span class="tab-skeleton"></span>
+                    <span class="tab-skeleton"></span>
                 </div>
             </div>
         </div>
@@ -84,7 +92,37 @@
                 <span id="results-count" class="results-count"></span>
             </div>
             <div id="products-container" class="products-grid">
-                <!-- Produits seront affichés ici -->
+                <!-- Silhouette affichée le temps que les vrais produits arrivent -->
+                <article class="product-card skeleton">
+                    <div class="product-media skeleton-block"></div>
+                    <div class="product-info">
+                        <div class="product-header">
+                            <span class="skeleton-block" style="width:60%;height:1rem;"></span>
+                            <span class="skeleton-block" style="width:44px;height:1rem;"></span>
+                        </div>
+                        <span class="skeleton-block" style="width:88%;height:.75rem;margin-top:.6rem;"></span>
+                    </div>
+                </article>
+                <article class="product-card skeleton">
+                    <div class="product-media skeleton-block"></div>
+                    <div class="product-info">
+                        <div class="product-header">
+                            <span class="skeleton-block" style="width:50%;height:1rem;"></span>
+                            <span class="skeleton-block" style="width:44px;height:1rem;"></span>
+                        </div>
+                        <span class="skeleton-block" style="width:75%;height:.75rem;margin-top:.6rem;"></span>
+                    </div>
+                </article>
+                <article class="product-card skeleton">
+                    <div class="product-media skeleton-block"></div>
+                    <div class="product-info">
+                        <div class="product-header">
+                            <span class="skeleton-block" style="width:65%;height:1rem;"></span>
+                            <span class="skeleton-block" style="width:44px;height:1rem;"></span>
+                        </div>
+                        <span class="skeleton-block" style="width:82%;height:.75rem;margin-top:.6rem;"></span>
+                    </div>
+                </article>
             </div>
         </main>
 
@@ -129,14 +167,10 @@
             </div>
         </article>
     </div>
-<script>
-window.addEventListener('error', function(e) {
-    alert('Erreur JS : ' + e.message);
-});
-window.addEventListener('unhandledrejection', function(e) {
-    alert('Erreur Promise : ' + (e.reason?.message || e.reason));
-});
-</script>
-    <script src="js/menu.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="js/supabaseClient.js?v=2"></script>
+<script src="js/menu.js?v=14"></script>
+    
 </body>
 </html>

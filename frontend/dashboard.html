@@ -3,17 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#0d302b">
-    <title>Tableau de bord — QR Menu</title>
-    <link rel="stylesheet" href="css/dashboard.css?v=1">
+    <meta name="theme-color" content="#141414">
+    <title>Tableau de bord — Tavolino</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Alex+Brush&family=Playfair+Display:wght@500;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/dashboard.css?v=5">
 </head>
 <body>
     <div class="dashboard-shell">
         <!-- Sidebar (desktop) / barre horizontale (mobile) -->
         <aside class="sidebar">
             <div class="brand">
-                <span class="brand-mark">QR MENU</span>
-                <span class="brand-sub">Espace propriétaire</span>
+                <span class="brand-mark">Tavolino</span>
+                <span class="brand-sub">GRILL &amp; PASTA — Espace propriétaire</span>
             </div>
 
             <nav class="nav" aria-label="Navigation du tableau de bord">
@@ -63,20 +66,6 @@
                         <span class="stat-value" id="category-count">0</span>
                         <span class="stat-label">Catégories</span>
                     </div>
-                </div>
-                <div class="quick-links">
-                    <a href="#cafe" class="quick-link nav-link" data-section="cafe">
-                        <span class="quick-link-title">Compléter les informations du café</span>
-                        <span class="quick-link-arrow">→</span>
-                    </a>
-                    <a href="#products" class="quick-link nav-link" data-section="products">
-                        <span class="quick-link-title">Ajouter un produit au menu</span>
-                        <span class="quick-link-arrow">→</span>
-                    </a>
-                    <a href="#qrcode" class="quick-link nav-link" data-section="qrcode">
-                        <span class="quick-link-title">Télécharger le QR Code de la table</span>
-                        <span class="quick-link-arrow">→</span>
-                    </a>
                 </div>
             </section>
 
@@ -147,6 +136,15 @@
                     </div>
                     <button type="button" class="btn-primary" onclick="openProductModal()">+ Ajouter un produit</button>
                 </div>
+
+                <div class="products-toolbar">
+                    <div class="search-box">
+                        <svg viewBox="0 0 24 24" fill="none" class="search-icon"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.5-3.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                        <input type="search" id="product-search" placeholder="Rechercher un produit par nom...">
+                    </div>
+                    <div class="category-tabs" id="product-category-tabs"></div>
+                </div>
+
                 <div id="products-list" class="cards-grid products-list">
                     <p class="empty-hint">Chargement des produits…</p>
                 </div>
@@ -172,87 +170,90 @@
     </div>
 
     <!-- Modale Catégorie -->
-    <!-- Modale Catégorie -->
-<div id="category-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-        <button type="button" class="modal-close" onclick="closeCategoryModal()" aria-label="Fermer">&times;</button>
-        <h3>Ajouter une catégorie</h3>
-        <form id="category-form">
-            <div class="field">
-                <label for="category-name-fr">Nom (Français)</label>
-                <input type="text" id="category-name-fr" placeholder="Cafés" required>
-            </div>
-            <div class="field">
-                <label for="category-name-en">Nom (English)</label>
-                <input type="text" id="category-name-en" placeholder="Coffee">
-            </div>
-            <div class="field">
-                <label for="category-name-ar">الاسم (العربية)</label>
-                <input type="text" id="category-name-ar" placeholder="قهوة" dir="rtl">
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn-secondary" onclick="closeCategoryModal()">Annuler</button>
-                <button type="submit" class="btn-primary">Enregistrer</button>
-            </div>
-        </form>
+    <div id="category-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button type="button" class="modal-close" onclick="closeCategoryModal()" aria-label="Fermer">&times;</button>
+            <h3>Ajouter une catégorie</h3>
+            <form id="category-form">
+                <div class="field">
+                    <label for="category-name-fr">Nom (Français)</label>
+                    <input type="text" id="category-name-fr" placeholder="Cafés" required>
+                </div>
+                <div class="field">
+                    <label for="category-name-en">Nom (English)</label>
+                    <input type="text" id="category-name-en" placeholder="Coffee">
+                </div>
+                <div class="field">
+                    <label for="category-name-ar">الاسم (العربية)</label>
+                    <input type="text" id="category-name-ar" placeholder="قهوة" dir="rtl">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeCategoryModal()">Annuler</button>
+                    <button type="submit" class="btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
+
     <!-- Modale Produit -->
-   <!-- Modale Produit -->
-<div id="product-modal" class="modal-overlay hidden">
-    <div class="modal-card">
-        <button type="button" class="modal-close" onclick="closeProductModal()" aria-label="Fermer">&times;</button>
-        <h3>Ajouter un produit</h3>
-        <form id="product-form">
-            <div class="field">
-                <label for="product-name-fr">Nom (Français)</label>
-                <input type="text" id="product-name-fr" placeholder="Cappuccino" required>
-            </div>
-            <div class="field">
-                <label for="product-name-en">Nom (English)</label>
-                <input type="text" id="product-name-en" required>
-            </div>
-            <div class="field">
-                <label for="product-name-ar">الاسم (العربية)</label>
-                <input type="text" id="product-name-ar" required dir="rtl">
-            </div>
-            <div class="field">
-                <label for="product-category">Catégorie</label>
-                <select id="product-category" required></select>
-            </div>
-            <div class="field">
-                <label for="product-description-fr">Description (Français)</label>
-                <textarea id="product-description-fr" rows="2" required></textarea>
-            </div>
-            <div class="field">
-                <label for="product-description-en">Description (English)</label>
-                <textarea id="product-description-en" rows="2" required></textarea>
-            </div>
-            <div class="field">
-                <label for="product-description-ar">الوصف (العربية)</label>
-                <textarea id="product-description-ar" rows="2" placeholder="إسبريسو مع حليب رغوي..." dir="rtl"></textarea>
-            </div>
-            <div class="field-grid">
+    <div id="product-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <button type="button" class="modal-close" onclick="closeProductModal()" aria-label="Fermer">&times;</button>
+            <h3>Ajouter un produit</h3>
+            <form id="product-form">
                 <div class="field">
-                    <label for="product-price">Prix (DT)</label>
-                    <input type="number" id="product-price" step="0.001" min="0" placeholder="4.500" required>
+                    <label for="product-name-fr">Nom (Français)</label>
+                    <input type="text" id="product-name-fr" placeholder="Cappuccino" required>
                 </div>
                 <div class="field">
-                    <label for="product-image">Photo</label>
-                    <input type="file" id="product-image" accept="image/*">
+                    <label for="product-name-en">Nom (English)</label>
+                    <input type="text" id="product-name-en" required>
                 </div>
-            </div>
-            <div class="field field-checkbox">
-                <label><input type="checkbox" id="product-available" checked> Disponible à la vente</label>
-            </div>
-            <div class="form-actions">
-                <button type="button" class="btn-secondary" onclick="closeProductModal()">Annuler</button>
-                <button type="submit" class="btn-primary">Enregistrer</button>
-            </div>
-        </form>
+                <div class="field">
+                    <label for="product-name-ar">الاسم (العربية)</label>
+                    <input type="text" id="product-name-ar" required dir="rtl">
+                </div>
+                <div class="field">
+                    <label for="product-category">Catégorie</label>
+                    <select id="product-category" required></select>
+                </div>
+                <div class="field">
+                    <label for="product-description-fr">Description (Français) <small>— facultatif</small></label>
+                    <textarea id="product-description-fr" rows="2" placeholder="Facultatif"></textarea>
+                </div>
+                <div class="field">
+                    <label for="product-description-en">Description (English)</label>
+                    <textarea id="product-description-en" rows="2" placeholder="Optional"></textarea>
+                </div>
+                <div class="field">
+                    <label for="product-description-ar">الوصف (العربية)</label>
+                    <textarea id="product-description-ar" rows="2" placeholder="اختياري" dir="rtl"></textarea>
+                </div>
+                <div class="field-grid">
+                    <div class="field">
+                        <label for="product-price">Prix (DT)</label>
+                        <input type="number" id="product-price" step="0.001" min="0" placeholder="4.500" required>
+                    </div>
+                    <div class="field">
+                        <label for="product-image">Photo</label>
+                        <input type="file" id="product-image" accept="image/*">
+                    </div>
+                </div>
+                <div class="field field-checkbox">
+                    <label><input type="checkbox" id="product-available" checked> Disponible à la vente</label>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeProductModal()">Annuler</button>
+                    <button type="submit" class="btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
     </div>
-</div>
-   <script src="js/app.js?v=2"></script>
-<script src="js/dashboard.js?v=2"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="js/supabaseClient.js?v=1"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+    <script src="js/app.js?v=2"></script>
+    <script src="js/dashboard.js?v=7"></script>
 </body>
 </html>

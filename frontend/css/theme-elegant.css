@@ -1,0 +1,111 @@
+/* ============================================
+   THEME "TAVOLINO" — Grill & Pasta
+   A charger APRES menu.css (voir instructions HTML),
+   avec les polices Google Fonts (voir instructions).
+   ============================================ */
+
+:root {
+    --ink: #111111;        /* noir du logo, réservé à l'en-tête */
+    --cream: #FAF5EB;      /* fond chaud du corps du menu */
+    --tomato: #D6472E;     /* rouge tomate, seule couleur d'accent */
+    --tomato-dark: #B23A24;
+    --charcoal: #1C1C1C;   /* texte courant */
+
+    --font-script: 'Alex Brush', cursive;     /* nom du café, esprit logo */
+    --font-display: 'Playfair Display', 'Georgia', serif; /* titres de catégories */
+}
+
+/* --- Nom du café : reprend le script du logo --- */
+#cafe-name {
+    font-family: var(--font-script);
+    font-size: 2.6em;
+    font-weight: 400;
+    color: var(--cream);
+    letter-spacing: 0.01em;
+}
+
+/* --- En-tête du menu : fond noir, comme le logo --- */
+.menu-header {
+    background-color: var(--ink);
+}
+
+.eyebrow {
+    color: var(--tomato);
+    letter-spacing: 0.14em;
+}
+
+/* --- Titres de catégories : serif élégant --- */
+.category-heading h3 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    color: var(--charcoal);
+}
+
+/* --- Sous-titre de catégorie (ex: "Nos pâtes fraîches...") ---
+   Le nom de la catégorie (h3) n'est jamais touché par ce fichier :
+   il reste toujours visible normalement.
+
+   Effet "rideau" : un fin trait se dessine d'abord, puis le texte se
+   révèle progressivement de gauche à droite. Se rejoue à chaque fois
+   que la section entre à l'écran (voir menu.js), pas une seule fois. */
+
+.category-subtitle-wrap {
+    margin-top: 6px;
+}
+
+.category-subtitle-rule {
+    display: block;
+    width: 0;
+    height: 1px;
+    background: var(--tomato);
+    opacity: 0.55;
+    margin-bottom: 8px;
+    transition: width 1.1s cubic-bezier(.65, 0, .35, 1);
+}
+
+.category-subtitle {
+    font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1.45;
+    letter-spacing: 0.01em;
+    max-width: 58ch;
+    margin: 0;
+    color: var(--tomato-dark);
+    opacity: 0.95;
+
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 1.4s cubic-bezier(.65, 0, .35, 1) 0.7s;
+}
+
+.category-subtitle-wrap.is-visible .category-subtitle-rule {
+    width: 46px;
+}
+
+.category-subtitle-wrap.is-visible .category-subtitle {
+    clip-path: inset(0 0 0 0);
+}
+
+/* --- Accent tomate sur les éléments interactifs du menu --- */
+.tab-button.active {
+    color: var(--tomato) !important;
+    background-color: var(--tomato) !important;
+    border-color: var(--tomato) !important;
+}
+
+.tab-indicator {
+    background: var(--tomato) !important;
+}
+
+.scroll-fab-progress {
+    stroke: var(--tomato) !important;
+}
+
+.view-toggle-btn.active {
+    color: var(--tomato) !important;
+    border-color: var(--tomato) !important;
+}
+
+.product-price {
+    color: var(--tomato-dark) !important;
+    font-weight: 700;
+}

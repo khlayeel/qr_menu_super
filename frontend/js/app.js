@@ -1,78 +1,49 @@
 /* ============================================
    MAIN APP JAVASCRIPT - QR MENU
+   Utilitaires partagés par toutes les pages (login, dashboard, menu client)
    ============================================ */
 
-// Configuration API
-const API_URL = 'http://192.168.1.15:8000/api';
-
-// Utilities
 const Utils = {
-    // Afficher un message temporaire
-    showMessage(message, type = 'success', duration = 3000) {
-        const messageEl = document.getElementById('auth-message');
-        if (!messageEl) return;
-
-        messageEl.textContent = message;
-        messageEl.className = `message ${type} show`;
-        messageEl.style.display = 'block';
-
-        if (duration > 0) {
-            setTimeout(() => {
-                messageEl.classList.remove('show');
-                messageEl.style.display = 'none';
-            }, duration);
+    /**
+     * Affiche une notification ("toast") en haut à droite de l'écran pour
+     * confirmer chaque action de l'admin (ajout, modification, suppression...).
+     * type : 'success' | 'error' | 'info'
+     */
+    showMessage(message, type = 'info', duration = 4000) {
+        let container = document.getElementById('toast-container');
+        if (!container) {
+            container = document.createElement('div');
+            container.id = 'toast-container';
+            document.body.appendChild(container);
         }
-    },
 
-    // Vérifier si l'utilisateur est connecté
-    isLoggedIn() {
-        return !!localStorage.getItem('token');
-    },
-
-    // Obtenir le token JWT
-    getToken() {
-        return localStorage.getItem('token');
-    },
-
-    // Stocker le token JWT
-    setToken(token) {
-        localStorage.setItem('token', token);
-    },
-
-    // Supprimer le token JWT
-    removeToken() {
-        localStorage.removeItem('token');
-    },
-
-    // Effectuer une requête API
-    async apiCall(endpoint, options = {}) {
-        const url = `${API_URL}${endpoint}`;
-        const headers = {
-            'Content-Type': 'application/json',
-            ...options.headers,
+        const icons = {
+            success: '<svg viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
+            error: '<svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>',
+            info: '<svg viewBox="0 0 24 24" fill="none"><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/></svg>',
         };
 
-        // Ajouter le token d'authentification si disponible
-        const token = this.getToken();
-        if (token) {
-            headers['Authorization'] = `Bearer ${token}`;
-        }
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.innerHTML = `
+            <span class="toast-icon">${icons[type] || icons.info}</span>
+            <span class="toast-text">${message}</span>
+            <button type="button" class="toast-close" aria-label="Fermer">&times;</button>
+        `;
 
-        const response = await fetch(url, {
-            ...options,
-            headers,
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('toast-visible'));
+
+        const remove = () => {
+            toast.classList.remove('toast-visible');
+            toast.addEventListener('transitionend', () => toast.remove(), { once: true });
+        };
+
+        const timer = duration > 0 ? setTimeout(remove, duration) : null;
+        toast.querySelector('.toast-close').addEventListener('click', () => {
+            if (timer) clearTimeout(timer);
+            remove();
         });
-
-        if (!response.ok) {
-            if (response.status === 401) {
-                // Token invalide, déconnecter l'utilisateur
-                this.removeToken();
-                window.location.href = '/login.html';
-            }
-            throw new Error(`API Error: ${response.statusText}`);
-        }
-
-        return response.json();
     },
 
     // Formater un prix en DT
@@ -80,32 +51,14 @@ const Utils = {
         return `${parseFloat(price).toFixed(3)} DT`;
     },
 
-    // Créer un slug à partir d'une chaîne
+    // Créer un slug à partir d'une chaîne (ex: nom de café -> URL du menu)
     createSlug(text) {
         return text
             .toLowerCase()
             .normalize('NFD')
-            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[̀-ͯ]/g, '')
             .replace(/[^\w\s-]/g, '')
             .replace(/[\s_]+/g, '-')
             .replace(/^-+|-+$/g, '');
     },
 };
-
-// Initialisation au chargement de la page
-document.addEventListener('DOMContentLoaded', () => {
-    console.log('[App] Initialisation de QR Menu');
-
-    // Vérifier la connexion
-    if (Utils.isLoggedIn()) {
-        console.log('[App] Utilisateur connecté');
-    } else {
-        console.log('[App] Utilisateur non connecté');
-    }
-});
-
-// Gestion des erreurs globales
-window.addEventListener('error', (event) => {
-    console.error('[Error]', event.error);
-    Utils.showMessage('Une erreur est survenue', 'error');
-});
